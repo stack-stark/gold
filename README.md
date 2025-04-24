@@ -8,6 +8,9 @@
 
 - 点击StatusBar展示黄金价格走势图表
 
+- 右键或者ALT+5快捷键可以手动刷新黄金价格
+
+- 收盘提醒功能，14:50,14:55两次提醒收盘。
 
 ## 配置 ⚙️
 
@@ -19,8 +22,5 @@
 | goldPriceRadar.earlyWarningInterval | 预警间隔（分钟） | 30 |
 | goldPriceRadar.earlyWarningMAx | 高于这个价格将会提醒 | 800
 | goldPriceRadar.earlyWarningMin | 低于这个价格将会提醒 | 700
+| goldPriceRadar.closingReminder | 收盘提醒 | true
 
-
-## 插件安装 🚀
-
-https://marketplace.visualstudio.com/items?itemName=stack-stark-code.gold-price-radar
