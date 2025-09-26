@@ -12,6 +12,8 @@
 
 - 收盘提醒功能，14:50,14:55两次提醒收盘。
 
+- 价格类型配置项，支持选择显示AU9999或XAU国际金价
+
 ## 配置 ⚙️
 
 在 vscode 设置中搜索`GoldPriceRadar`,根据提示配置即可。
@@ -23,4 +25,6 @@
 | goldPriceRadar.earlyWarningMAx | 高于这个价格将会提醒 | 800
 | goldPriceRadar.earlyWarningMin | 低于这个价格将会提醒 | 700
 | goldPriceRadar.closingReminder | 收盘提醒 | true
+| goldPriceRadar.priceType | 价格类型，Au9999国内金价，XAU国际金价 | Au9999
+
 
