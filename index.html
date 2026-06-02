@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金价雷达 - Gold Price Radar</title>
+    <link rel="icon" href="logo.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gold: #FFD700;
+            --gold-light: #FFE44D;
+            --gold-dark: #B8960C;
+            --bg-primary: #0A0A0F;
+            --bg-secondary: #12121A;
+            --bg-card: #1A1A25;
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0A0B0;
+            --text-muted: #6B6B7B;
+            --border: #2A2A3A;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        canvas#particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .cursor-glow {
+            position: fixed;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.06) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 1;
+            transform: translate(-50%, -50%);
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 16px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            backdrop-filter: blur(20px);
+            background: rgba(10, 10, 15, 0.7);
+            border-bottom: 1px solid rgba(255, 215, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        nav.scrolled {
+            padding: 10px 40px;
+            background: rgba(10, 10, 15, 0.95);
+            border-bottom: 1px solid rgba(255, 215, 0, 0.15);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .nav-brand img {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+        }
+
+        .nav-brand span {
+            font-weight: 700;
+            font-size: 18px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--gold);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gold);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-cta {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+            color: #000 !important;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            -webkit-text-fill-color: #000 !important;
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
+        }
+
+        .nav-cta::after {
+            display: none !important;
+        }
+
+        section {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 120px 40px 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-bg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.15;
+        }
+
+        .hero-bg-orb.orb1 {
+            width: 600px;
+            height: 600px;
+            background: var(--gold);
+            top: -200px;
+            right: -100px;
+        }
+
+        .hero-bg-orb.orb2 {
+            width: 400px;
+            height: 400px;
+            background: #FF6B35;
+            bottom: -100px;
+            left: -100px;
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 900px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: rgba(255, 215, 0, 0.08);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 100px;
+            font-size: 13px;
+            color: var(--gold);
+            font-weight: 500;
+            margin-bottom: 32px;
+            opacity: 0;
+        }
+
+        .hero-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--gold);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .hero-logo {
+            width: 120px;
+            height: 120px;
+            border-radius: 24px;
+            margin: 0 auto 40px;
+            opacity: 0;
+            filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.3));
+        }
+
+        .hero-title {
+            font-size: clamp(48px, 8vw, 88px);
+            font-weight: 900;
+            line-height: 1.05;
+            margin-bottom: 24px;
+            letter-spacing: -2px;
+        }
+
+        .hero-title .line {
+            display: block;
+            overflow: hidden;
+        }
+
+        .hero-title .line-inner {
+            display: block;
+            transform: translateY(110%);
+        }
+
+        .hero-title .gold {
+            background: linear-gradient(135deg, var(--gold), var(--gold-light), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(16px, 2vw, 20px);
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 48px;
+            line-height: 1.7;
+            opacity: 0;
+        }
+
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            opacity: 0;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+            color: #000;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 15px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(255, 215, 0, 0.35);
+        }
+
+        .btn-primary svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 32px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 15px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .hero-stats {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 48px;
+            margin-top: 64px;
+            opacity: 0;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .divider {
+            width: 1px;
+            height: 40px;
+            background: var(--border);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .section-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: rgba(255, 215, 0, 0.06);
+            border: 1px solid rgba(255, 215, 0, 0.15);
+            border-radius: 100px;
+            font-size: 12px;
+            color: var(--gold);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: clamp(32px, 5vw, 52px);
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 16px;
+        }
+
+        .section-desc {
+            font-size: 17px;
+            color: var(--text-secondary);
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        .features {
+            padding: 120px 40px;
+            background: var(--bg-secondary);
+            position: relative;
+        }
+
+        .features::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold-dark), transparent);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 36px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(255, 215, 0, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            background: rgba(255, 215, 0, 0.08);
+            border: 1px solid rgba(255, 215, 0, 0.15);
+        }
+
+        .feature-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .feature-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .showcase {
+            padding: 120px 40px;
+            position: relative;
+        }
+
+        .showcase-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .editor-mockup {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            transform: perspective(1000px) rotateX(8deg) scale(0.95);
+        }
+
+        .editor-titlebar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .editor-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .editor-dot.red { background: #FF5F57; }
+        .editor-dot.yellow { background: #FFBD2E; }
+        .editor-dot.green { background: #28CA41; }
+
+        .editor-titlebar-text {
+            flex: 1;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .editor-body {
+            display: flex;
+            min-height: 400px;
+        }
+
+        .editor-sidebar {
+            width: 48px;
+            background: rgba(0, 0, 0, 0.2);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 12px;
+            gap: 16px;
+        }
+
+        .sidebar-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-icon.active {
+            background: rgba(255, 215, 0, 0.15);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .editor-content {
+            flex: 1;
+            padding: 20px;
+            position: relative;
+        }
+
+        .code-line {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 6px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            opacity: 0;
+        }
+
+        .code-line .ln {
+            color: var(--text-muted);
+            min-width: 24px;
+            text-align: right;
+            user-select: none;
+        }
+
+        .code-line .kw { color: #C678DD; }
+        .code-line .fn { color: #61AFEF; }
+        .code-line .str { color: #98C379; }
+        .code-line .num { color: var(--gold); }
+        .code-line .cm { color: #5C6370; }
+        .code-line .op { color: #ABB2BF; }
+        .code-line .var { color: #E06C75; }
+
+        .editor-statusbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 12px;
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+            font-size: 12px;
+            color: #000;
+            font-weight: 600;
+        }
+
+        .statusbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .statusbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .price-display {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .price-display .price-up {
+            color: #000;
+        }
+
+        .price-ticker {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            animation: price-blink 2s infinite;
+        }
+
+        @keyframes price-blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .config {
+            padding: 120px 40px;
+            background: var(--bg-secondary);
+            position: relative;
+        }
+
+        .config::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold-dark), transparent);
+        }
+
+        .config-table-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            overflow-x: auto;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .config-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .config-table thead {
+            background: rgba(255, 215, 0, 0.06);
+        }
+
+        .config-table th {
+            padding: 16px 24px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .config-table td {
+            padding: 14px 24px;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .config-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .config-table .config-id {
+            font-family: 'Consolas', monospace;
+            color: var(--gold);
+            font-size: 13px;
+        }
+
+        .config-table .config-default {
+            font-family: 'Consolas', monospace;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .config-table tbody tr {
+            transition: background 0.2s ease;
+        }
+
+        .config-table tbody tr:hover {
+            background: rgba(255, 215, 0, 0.03);
+        }
+
+        .faq {
+            padding: 120px 40px;
+        }
+
+        .faq-list {
+            max-width: 720px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .faq-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .faq-item:hover {
+            border-color: rgba(255, 215, 0, 0.2);
+        }
+
+        .faq-question {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            user-select: none;
+            transition: color 0.3s ease;
+        }
+
+        .faq-question:hover {
+            color: var(--gold);
+        }
+
+        .faq-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255, 215, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .faq-item.open .faq-icon {
+            background: var(--gold);
+            color: #000;
+            transform: rotate(45deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.4s ease;
+        }
+
+        .faq-item.open .faq-answer {
+            max-height: 200px;
+            padding: 0 24px 20px;
+        }
+
+        .faq-answer p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .cta {
+            padding: 120px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-bg {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.08) 0%, transparent 70%);
+        }
+
+        .cta-content {
+            position: relative;
+            z-index: 2;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .cta-title {
+            font-size: clamp(32px, 5vw, 52px);
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
+        }
+
+        .cta-desc {
+            font-size: 17px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        footer {
+            padding: 40px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 2;
+        }
+
+        footer p {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        footer a {
+            color: var(--gold);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            opacity: 0;
+        }
+
+        .scroll-indicator span {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .scroll-mouse {
+            width: 24px;
+            height: 38px;
+            border: 2px solid var(--text-muted);
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .scroll-mouse::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3px;
+            height: 8px;
+            background: var(--gold);
+            border-radius: 2px;
+            animation: scroll-anim 2s infinite;
+        }
+
+        @keyframes scroll-anim {
+            0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(12px); }
+        }
+
+        .disclaimer {
+            max-width: 800px;
+            margin: 0 auto 40px;
+            padding: 16px 24px;
+            background: rgba(255, 107, 53, 0.06);
+            border: 1px solid rgba(255, 107, 53, 0.15);
+            border-radius: 12px;
+            font-size: 13px;
+            color: #FF9A76;
+            line-height: 1.7;
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                padding: 12px 20px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                padding: 100px 20px 60px;
+            }
+
+            .hero-stats {
+                gap: 24px;
+                flex-wrap: wrap;
+            }
+
+            .features, .config, .faq, .showcase, .cta {
+                padding: 80px 20px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .editor-body {
+                min-height: 280px;
+            }
+
+            .editor-sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particles"></canvas>
+    <div class="cursor-glow" id="cursorGlow"></div>
+
+    <nav id="navbar">
+        <a href="#" class="nav-brand">
+            <img src="logo.png" alt="金价雷达">
+            <span>金价雷达</span>
+        </a>
+        <div class="nav-links">
+            <a href="#features">功能</a>
+            <a href="#showcase">预览</a>
+            <a href="#config">配置</a>
+            <a href="#faq">常见问题</a>
+            <a href="https://marketplace.visualstudio.com/items?itemName=stack-stark-code.gold-price-radar" target="_blank" class="nav-cta">安装插件</a>
+        </div>
+    </nav>
+
+    <section class="hero" id="hero">
+        <div class="hero-bg-orb orb1"></div>
+        <div class="hero-bg-orb orb2"></div>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="dot"></span>
+                VS Code Extension
+            </div>
+            <img src="logo.png" alt="金价雷达" class="hero-logo" id="heroLogo">
+            <h1 class="hero-title">
+                <span class="line"><span class="line-inner">编辑器里的</span></span>
+                <span class="line"><span class="line-inner"><span class="gold">金价雷达</span></span></span>
+            </h1>
+            <p class="hero-subtitle">实时追踪国际金价、银价与国内金价，在状态栏随时掌握行情动态。智能预警，收盘提醒，让投资决策快人一步。</p>
+            <div class="hero-actions">
+                <a href="https://marketplace.visualstudio.com/items?itemName=stack-stark-code.gold-price-radar" target="_blank" class="btn-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    安装插件
+                </a>
+                <a href="#features" class="btn-secondary">
+                    了解更多
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+            </div>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="hero-stat-value" id="statInterval">5min</div>
+                    <div class="hero-stat-label">自动刷新</div>
+                </div>
+                <div class="divider"></div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value">3</div>
+                    <div class="hero-stat-label">价格类型</div>
+                </div>
+                <div class="divider"></div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value">24h</div>
+                    <div class="hero-stat-label">全天监控</div>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator" id="scrollIndicator">
+            <div class="scroll-mouse"></div>
+            <span>Scroll</span>
+        </div>
+    </section>
+
+    <section class="features" id="features">
+        <div class="section-header">
+            <div class="section-tag">✦ 核心功能</div>
+            <h2 class="section-title">为投资者打造的<span class="gold">贴心工具</span></h2>
+            <p class="section-desc">每一项功能都围绕"在编辑器中高效获取金价信息"这一核心体验精心设计</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">实时价格更新</div>
+                <div class="feature-desc">每5分钟自动刷新价格数据（可配置更新间隔），无需离开编辑器即可掌握最新行情。</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔔</div>
+                <div class="feature-title">智能价格预警</div>
+                <div class="feature-desc">设置价格上下限，当金价突破预警阈值时自动提醒，不错过任何投资机会。</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📈</div>
+                <div class="feature-title">走势图表展示</div>
+                <div class="feature-desc">点击状态栏即可查看黄金价格走势图表，直观了解价格变化趋势。</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔄</div>
+                <div class="feature-title">手动快速刷新</div>
+                <div class="feature-desc">右键菜单或 ALT+5 快捷键一键手动刷新，数据获取更灵活。</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⏰</div>
+                <div class="feature-title">收盘提醒</div>
+                <div class="feature-desc">14:50 和 14:55 两次收盘提醒，确保您在收盘前及时做出交易决策。</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <div class="feature-title">多价格类型</div>
+                <div class="feature-desc">状态栏支持显示 AU9999 国内金价、XAU 国际金价或 XAG 国际银价，按需切换。</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="showcase" id="showcase">
+        <div class="section-header">
+            <div class="section-tag">✦ 插件预览</div>
+            <h2 class="section-title">在编辑器中<span class="gold">实时查看</span></h2>
+            <p class="section-desc">金价信息直接显示在 VS Code 状态栏，编码投资两不误</p>
+        </div>
+        <div class="showcase-container">
+            <div class="editor-mockup" id="editorMockup">
+                <div class="editor-titlebar">
+                    <div class="editor-dot red"></div>
+                    <div class="editor-dot yellow"></div>
+                    <div class="editor-dot green"></div>
+                    <div class="editor-titlebar-text">main.ts — gold-price-radar</div>
+                </div>
+                <div class="editor-body">
+                    <div class="editor-sidebar">
+                        <div class="sidebar-icon"></div>
+                        <div class="sidebar-icon"></div>
+                        <div class="sidebar-icon active"></div>
+                        <div class="sidebar-icon"></div>
+                        <div class="sidebar-icon"></div>
+                    </div>
+                    <div class="editor-content">
+                        <div class="code-line"><span class="ln">1</span><span class="cm">// 工作代码示意</span></div>
+                        <div class="code-line"><span class="ln">2</span><span class="kw">import</span> <span class="op">{</span> <span class="var">GoldPriceRadar</span> <span class="op">}</span> <span class="kw">from</span> <span class="str">'@stack-stark/gold-radar'</span><span class="op">;</span></div>
+                        <div class="code-line"><span class="ln">3</span></div>
+                        <div class="code-line"><span class="ln">4</span><span class="kw">const</span> <span class="var">radar</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">GoldPriceRadar</span><span class="op">({</span></div>
+                        <div class="code-line"><span class="ln">5</span>  <span class="var">updateInterval</span><span class="op">:</span> <span class="num">5</span><span class="op">,</span></div>
+                        <div class="code-line"><span class="ln">6</span>  <span class="var">priceType</span><span class="op">:</span> <span class="str">'AU9999'</span><span class="op">,</span></div>
+                        <div class="code-line"><span class="ln">7</span>  <span class="var">earlyWarningMax</span><span class="op">:</span> <span class="num">900</span><span class="op">,</span></div>
+                        <div class="code-line"><span class="ln">8</span>  <span class="var">earlyWarningMin</span><span class="op">:</span> <span class="num">800</span><span class="op">,</span></div>
+                        <div class="code-line"><span class="ln">9</span><span class="op">});</span></div>
+                        <div class="code-line"><span class="ln">10</span></div>
+                        <div class="code-line"><span class="ln">11</span><span class="var">radar</span><span class="op">.</span><span class="fn">onPriceUpdate</span><span class="op">((</span><span class="var">price</span><span class="op">)</span> <span class="kw">=></span> <span class="op">{</span></div>
+                        <div class="code-line"><span class="ln">12</span>  <span class="var">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">`当前金价: ¥</span><span class="num">${price.au9999}</span><span class="str">/g`</span><span class="op">);</span></div>
+                        <div class="code-line"><span class="ln">13</span><span class="op">});</span></div>
+                        <div class="code-line"><span class="ln">14</span></div>
+                        <div class="code-line"><span class="ln">15</span><span class="var">radar</span><span class="op">.</span><span class="fn">start</span><span class="op">();</span></div>
+                    </div>
+                </div>
+                <div class="editor-statusbar">
+                    <div class="statusbar-left">
+                        <span>⭐ 主分支</span>
+                        <span>UTF-8</span>
+                        <span>TypeScript</span>
+                    </div>
+                    <div class="statusbar-right">
+                        <div class="price-display">
+                            <span class="price-ticker">●</span>
+                            <span>AU9999 ¥856.30</span>
+                            <span class="price-up">▲ +2.15</span>
+                        </div>
+                        <span>XAU $2,648.50</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="config" id="config">
+        <div class="section-header">
+            <div class="section-tag">✦ 灵活配置</div>
+            <h2 class="section-title">按你的习惯<span class="gold">自定义</span></h2>
+            <p class="section-desc">在 VS Code 设置中搜索 GoldPriceRadar 即可配置</p>
+        </div>
+        <div class="config-table-wrapper" id="configTable">
+            <table class="config-table">
+                <thead>
+                    <tr>
+                        <th>配置项</th>
+                        <th>说明</th>
+                        <th>默认值</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="config-id">updateInterval</span></td>
+                        <td>数据更新间隔（分钟）</td>
+                        <td><span class="config-default">5</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="config-id">priceReminder</span></td>
+                        <td>价格提醒开关</td>
+                        <td><span class="config-default">false</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="config-id">earlyWarningInterval</span></td>
+                        <td>预警间隔（分钟）</td>
+                        <td><span class="config-default">30</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="config-id">earlyWarningMax</span></td>
+                        <td>高于此价格将会提醒</td>
+                        <td><span class="config-default">900</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="config-id">earlyWarningMin</span></td>
+                        <td>低于此价格将会提醒</td>
+                        <td><span class="config-default">800</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="config-id">closingReminder</span></td>
+                        <td>收盘提醒</td>
+                        <td><span class="config-default">true</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="config-id">priceType</span></td>
+                        <td>价格类型：AU9999 / XAU / XAG</td>
+                        <td><span class="config-default">AU9999</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="faq" id="faq">
+        <div class="section-header">
+            <div class="section-tag">✦ 常见问题</div>
+            <h2 class="section-title">你可能想<span class="gold">了解的</span></h2>
+        </div>
+        <div class="faq-list">
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>无法安装插件怎么办？</span>
+                    <div class="faq-icon">+</div>
+                </div>
+                <div class="faq-answer">
+                    <p>请检查 VS Code 版本，确保 VS Code 或其衍生编辑器（Trae、Cursor 等）的版本不低于 1.96.0。</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>价格获取失败怎么办？</span>
+                    <div class="faq-icon">+</div>
+                </div>
+                <div class="faq-answer">
+                    <p>右键或使用 ALT+5 快捷键手动刷新价格。如果仍然失败，尝试重启编辑器。如果问题持续，可能是第三方接口暂时不可用，请等待恢复。</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>为什么没有收到提醒？</span>
+                    <div class="faq-icon">+</div>
+                </div>
+                <div class="faq-answer">
+                    <p>请检查是否开启了编辑器的"免打扰模式"。您可以关闭免打扰模式，或将插件加入提醒白名单。</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>支持哪些编辑器？</span>
+                    <div class="faq-icon">+</div>
+                </div>
+                <div class="faq-answer">
+                    <p>支持 VS Code 及其衍生编辑器，包括 Trae、Cursor 等，只要底层 VS Code 版本 ≥ 1.96.0 即可。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta" id="cta">
+        <div class="cta-bg"></div>
+        <div class="cta-content">
+            <div class="disclaimer">
+                ⚠️ <strong>特别提醒：</strong>价格基于第三方接口获取，数据仅用于个人学习和研究目的。插件不做价格准确性、及时性保证，投资风险用户自负！
+            </div>
+            <h2 class="cta-title">开始使用<span class="gold">金价雷达</span></h2>
+            <p class="cta-desc">安装插件，在编辑器中随时掌握黄金白银价格动态</p>
+            <a href="https://marketplace.visualstudio.com/items?itemName=stack-stark-code.gold-price-radar" target="_blank" class="btn-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                前往 VS Code 插件市场安装
+            </a>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2024-2026 金价雷达 Gold Price Radar · by <a href="https://github.com/stack-stark" target="_blank">stack-stark</a></p>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
+    <script>
+        gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+
+        // === Particles ===
+        const canvas = document.getElementById('particles');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let mouseX = 0, mouseY = 0;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 0.3;
+                this.speedY = (Math.random() - 0.5) * 0.3;
+                this.opacity = Math.random() * 0.5 + 0.1;
+                this.gold = Math.random() > 0.7;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                const dx = mouseX - this.x;
+                const dy = mouseY - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 150) {
+                    this.x -= dx * 0.005;
+                    this.y -= dy * 0.005;
+                }
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                    this.reset();
+                }
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                if (this.gold) {
+                    ctx.fillStyle = `rgba(255, 215, 0, ${this.opacity})`;
+                } else {
+                    ctx.fillStyle = `rgba(160, 160, 176, ${this.opacity * 0.5})`;
+                }
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < 80; i++) {
+            particles.push(new Particle());
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 120) {
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        const alpha = (1 - dist / 120) * 0.08;
+                        if (particles[i].gold || particles[j].gold) {
+                            ctx.strokeStyle = `rgba(255, 215, 0, ${alpha})`;
+                        } else {
+                            ctx.strokeStyle = `rgba(160, 160, 176, ${alpha})`;
+                        }
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // === Cursor Glow ===
+        const cursorGlow = document.getElementById('cursorGlow');
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            gsap.to(cursorGlow, {
+                x: e.clientX,
+                y: e.clientY,
+                duration: 0.5,
+                ease: 'power2.out'
+            });
+        });
+
+        // === Navbar scroll ===
+        ScrollTrigger.create({
+            start: 'top -80',
+            onEnter: () => document.getElementById('navbar').classList.add('scrolled'),
+            onLeaveBack: () => document.getElementById('navbar').classList.remove('scrolled')
+        });
+
+        // === Hero Animations ===
+        const heroTl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+        heroTl
+            .to('.hero-badge', { opacity: 1, y: 0, duration: 0.6 }, 0.3)
+            .to('#heroLogo', { opacity: 1, y: 0, duration: 0.8, ease: 'back.out(1.7)' }, 0.4)
+            .to('.hero-title .line-inner', {
+                y: 0,
+                duration: 0.8,
+                stagger: 0.15,
+                ease: 'power3.out'
+            }, 0.5)
+            .to('.hero-subtitle', { opacity: 1, y: 0, duration: 0.6 }, 1.1)
+            .to('.hero-actions', { opacity: 1, y: 0, duration: 0.6 }, 1.3)
+            .to('.hero-stats', { opacity: 1, y: 0, duration: 0.6 }, 1.5)
+            .to('#scrollIndicator', { opacity: 1, duration: 0.6 }, 1.8);
+
+        // Hero logo floating animation
+        gsap.to('#heroLogo', {
+            y: -10,
+            duration: 3,
+            ease: 'sine.inOut',
+            yoyo: true,
+            repeat: -1
+        });
+
+        // Scroll indicator fade out
+        gsap.to('#scrollIndicator', {
+            opacity: 0,
+            scrollTrigger: {
+                trigger: '#hero',
+                start: 'top top',
+                end: '+=200',
+                scrub: true
+            }
+        });
+
+        // === Feature Cards ===
+        gsap.utils.toArray('.feature-card').forEach((card, i) => {
+            gsap.to(card, {
+                opacity: 1,
+                y: 0,
+                duration: 0.6,
+                delay: i * 0.1,
+                ease: 'power2.out',
+                scrollTrigger: {
+                    trigger: card,
+                    start: 'top 85%',
+                    toggleActions: 'play none none reverse'
+                }
+            });
+        });
+
+        // === Editor Mockup ===
+        gsap.to('#editorMockup', {
+            opacity: 1,
+            rotateX: 0,
+            scale: 1,
+            duration: 1,
+            ease: 'power2.out',
+            scrollTrigger: {
+                trigger: '#editorMockup',
+                start: 'top 80%',
+                toggleActions: 'play none none reverse'
+            }
+        });
+
+        // Code lines stagger animation
+        gsap.utils.toArray('.code-line').forEach((line, i) => {
+            gsap.to(line, {
+                opacity: 1,
+                x: 0,
+                duration: 0.3,
+                delay: i * 0.08,
+                ease: 'power2.out',
+                scrollTrigger: {
+                    trigger: '#editorMockup',
+                    start: 'top 80%',
+                    toggleActions: 'play none none reverse'
+                }
+            });
+        });
+
+        // === Config Table ===
+        gsap.to('#configTable', {
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            ease: 'power2.out',
+            scrollTrigger: {
+                trigger: '#configTable',
+                start: 'top 80%',
+                toggleActions: 'play none none reverse'
+            }
+        });
+
+        // === FAQ Items ===
+        gsap.utils.toArray('.faq-item').forEach((item, i) => {
+            gsap.to(item, {
+                opacity: 1,
+                y: 0,
+                duration: 0.5,
+                delay: i * 0.1,
+                ease: 'power2.out',
+                scrollTrigger: {
+                    trigger: item,
+                    start: 'top 85%',
+                    toggleActions: 'play none none reverse'
+                }
+            });
+        });
+
+        // FAQ toggle
+        document.querySelectorAll('.faq-question').forEach(q => {
+            q.addEventListener('click', () => {
+                const item = q.parentElement;
+                const wasOpen = item.classList.contains('open');
+                document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+                if (!wasOpen) item.classList.add('open');
+            });
+        });
+
+        // === CTA Section ===
+        gsap.to('.cta-content', {
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            ease: 'power2.out',
+            scrollTrigger: {
+                trigger: '.cta-content',
+                start: 'top 80%',
+                toggleActions: 'play none none reverse'
+            }
+        });
+
+        // === Section Headers ===
+        gsap.utils.toArray('.section-header').forEach(header => {
+            gsap.from(header.children, {
+                opacity: 0,
+                y: 30,
+                duration: 0.6,
+                stagger: 0.15,
+                ease: 'power2.out',
+                scrollTrigger: {
+                    trigger: header,
+                    start: 'top 85%',
+                    toggleActions: 'play none none reverse'
+                }
+            });
+        });
+
+        // === Smooth scroll for nav links ===
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = document.querySelector(anchor.getAttribute('href'));
+                if (target) {
+                    gsap.to(window, {
+                        scrollTo: { y: target, offsetY: 60 },
+                        duration: 0.1,
+                        ease: 'power2.out'
+                    });
+                }
+            });
+        });
+
+        // === Parallax orbs ===
+        gsap.to('.hero-bg-orb.orb1', {
+            y: -100,
+            scrollTrigger: {
+                trigger: '.hero',
+                start: 'top top',
+                end: 'bottom top',
+                scrub: 1
+            }
+        });
+
+        gsap.to('.hero-bg-orb.orb2', {
+            y: -60,
+            scrollTrigger: {
+                trigger: '.hero',
+                start: 'top top',
+                end: 'bottom top',
+                scrub: 1
+            }
+        });
+
+        // === Gold text shimmer ===
+        const goldElements = document.querySelectorAll('.gold');
+        goldElements.forEach(el => {
+            el.style.backgroundImage = 'linear-gradient(135deg, #FFD700, #FFE44D, #FFD700, #B8960C, #FFD700)';
+            el.style.backgroundSize = '200% 100%';
+            el.style.webkitBackgroundClip = 'text';
+            el.style.webkitTextFillColor = 'transparent';
+            el.style.backgroundClip = 'text';
+
+            gsap.to(el, {
+                backgroundPosition: '200% center',
+                duration: 3,
+                ease: 'none',
+                repeat: -1
+            });
+        });
+
+        // === Price number animation in statusbar ===
+        const priceEl = document.querySelector('.price-display span:nth-child(2)');
+        if (priceEl) {
+            let basePrice = 856.30;
+            setInterval(() => {
+                const change = (Math.random() - 0.48) * 1.5;
+                basePrice += change;
+                basePrice = Math.max(840, Math.min(870, basePrice));
+                const up = change >= 0;
+                priceEl.textContent = `AU9999 ¥${basePrice.toFixed(2)}`;
+                const upEl = document.querySelector('.price-up');
+                if (upEl) {
+                    upEl.textContent = `${up ? '▲' : '▼'} ${up ? '+' : ''}${change.toFixed(2)}`;
+                    upEl.style.color = up ? '#28CA41' : '#FF5F57';
+                }
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
